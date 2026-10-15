@@ -1,0 +1,38 @@
+{
+	"schemaVersion": 1,
+	"id": "mine-doom",
+	"version": "${version}",
+	"name": "Mine Doom",
+	"description": "This is an example description! Tell everyone what your mod is about!",
+	"authors": [
+		"Me!"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/mine-doom/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.netherairtune.minedoom.MineDoom"
+		],
+		"client": [
+			"com.netherairtune.minedoom.client.MineDoomClient"
+		]
+	},
+	"mixins": [
+		"mine-doom.mixins.json",
+		{
+			"config": "mine-doom.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~26.3",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}
