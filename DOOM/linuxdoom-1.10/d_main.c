@@ -363,7 +363,7 @@ void D_DoomLoop (void)
 	printf ("debug output to: %s\n",filename);
 	debugfile = fopen (filename,"w");
     }
-	
+		
     I_InitGraphics ();
 
     while (1)
@@ -1167,5 +1167,30 @@ void D_DoomMain (void)
 
     }
 
-    D_DoomLoop ();  // never returns
+    // D_DoomLoop ();  // never returns
+
+	// Call run tick externally
+	if (demorecording)
+	G_BeginRecording ();
+		
+    if (M_CheckParm ("-debugfile"))
+    {
+	char    filename[20];
+	sprintf (filename,"debug%i.txt",consoleplayer);
+	printf ("debug output to: %s\n",filename);
+	debugfile = fopen (filename,"w");
+    }
+		
+    I_InitGraphics ();
+
+	S_UpdateSounds (players[consoleplayer].mo);// move positional sounds
+	#ifndef SNDSERV
+		// Sound mixing for the buffer is snychronous.
+		I_UpdateSound();
+	#endif	
+		// Synchronous sound output is explicitly called.
+	#ifndef SNDINTR
+		// Update sound output.
+		I_SubmitSound();
+	#endif
 }
