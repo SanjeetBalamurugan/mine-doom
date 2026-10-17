@@ -738,7 +738,7 @@ void
 I_InitSound()
 { 
 #ifdef SNDSERV
-  char buffer[256];
+  char buffer[256]; // this is just storing the file location gng
   
   if (getenv("DOOMWADDIR"))
     sprintf(buffer, "%s/%s",
@@ -746,7 +746,7 @@ I_InitSound()
 	    sndserver_filename);
   else
     sprintf(buffer, "%s", sndserver_filename);
-  
+
   // start sound process
   if ( !access(buffer, X_OK) )
   {

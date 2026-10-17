@@ -33,6 +33,7 @@ int save_frame_as_image(const char* output)
     }
     
     int image = stbi_write_png(output, width, height, channels, rgb_data, width * channels);
+    free(rgb_data);
     return image;
 }
 
@@ -78,6 +79,11 @@ int main(int argc, char** argv)
     // }
     
     // Running 1 tick and printing the buffer
+    DOOM_RUNTICK();
+    DOOM_RENDERFRAME();
+
+    DOOM_KeyDown(DOOM_KEY_UPARROW);
+
     DOOM_RUNTICK();
     DOOM_RENDERFRAME();
 

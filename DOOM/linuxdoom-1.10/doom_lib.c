@@ -85,3 +85,51 @@ byte* DOOM_GetPalette(void)
 {
     return (byte*)W_CacheLumpName("PLAYPAL", PU_CACHE);
 }
+
+int DOOM_GetGameTic(void) {
+    return gametic;
+}
+
+int DOOM_GetLevelTime(void) {
+    return leveltime;
+}
+
+void DOOM_KeyDown(int key) {
+    event_t event;
+    event.type = ev_keydown;
+    event.data1 = key;
+    event.data2 = 0;
+    event.data3 = 0;
+    D_PostEvent(&event);
+}
+
+void DOOM_KeyUp(int key) {
+    event_t event;
+    event.type = ev_keyup;
+    event.data1 = key;
+    event.data2 = 0;
+    event.data3 = 0;
+    D_PostEvent(&event);
+}
+
+void DOOM_MouseMove(int x, int y) {
+    event_t event;
+    event.type = ev_mouse;
+    event.data1 = 0;
+    event.data2 = x << 2;
+    event.data3 = y << 2;
+    D_PostEvent(&event);
+}
+
+void DOOM_MouseButton(int button, boolean pressed) {
+    event_t event;
+    event.type = ev_mouse;
+    event.data1 = pressed ? (1 << button) : 0;
+    event.data2 = 0;
+    event.data3 = 0;
+    D_PostEvent(&event);
+}
+
+void DOOM_SendKeyPress(int key) {
+    DOOM_KeyDown(key);
+}
