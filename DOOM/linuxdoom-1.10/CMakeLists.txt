@@ -27,7 +27,7 @@ else()
 endif()
 
 file(GLOB SOURCES "*.c")
-list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/doom_lib.c")
+list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/doom_lib.c" "${CMAKE_CURRENT_SOURCE_DIR}/doom_sounds.c")
 
 if(NORMAL_BUILD)
     add_executable(doom_exec ${SOURCES})

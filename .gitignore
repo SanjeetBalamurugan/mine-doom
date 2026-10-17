@@ -43,3 +43,7 @@ replay_*.log
 # 
 Makefile
 *.make
+
+# exports
+export/
+*.log

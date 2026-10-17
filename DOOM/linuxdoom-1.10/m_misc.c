@@ -209,7 +209,7 @@ extern	int	numChannels;
 
 // UNIX hack, to be removed.
 #ifdef SNDSERV
-extern char*	sndserver_filename;
+char*	sndserver_filename = "./sndserv";
 extern int	mb_used;
 #endif
 
