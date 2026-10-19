@@ -38,6 +38,8 @@ processResources {
 	filesMatching("fabric.mod.json") {
 		expand "version": version
 	}
+
+	from("dist/native") { into "native" }
 }
 
 tasks.withType(JavaCompile).configureEach {

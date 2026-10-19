@@ -27,32 +27,58 @@
 
 #ifndef __BYTEBOOL__
 #define __BYTEBOOL__
-// Fixed to use builtin bool type with C++.
+
 #ifdef __cplusplus
 typedef bool boolean;
+#elif defined(_WIN32)
+typedef unsigned char boolean;
+#ifndef true
+#define true 1
+#endif
+#ifndef false
+#define false 0
+#endif
 #else
 typedef enum {false, true} boolean;
 #endif
+
 typedef unsigned char byte;
 #endif
 
 
 // Predefined with some OS.
-#ifdef LINUX
-#include <values.h>
-#else
-#define MAXCHAR		((char)0x7f)
-#define MAXSHORT	((short)0x7fff)
+#include <limits.h>
 
-// Max pos 32-bit int.
-#define MAXINT		((int)0x7fffffff)	
-#define MAXLONG		((long)0x7fffffff)
-#define MINCHAR		((char)0x80)
-#define MINSHORT	((short)0x8000)
+#ifndef MAXCHAR
+#define MAXCHAR  CHAR_MAX
+#endif
 
-// Max negative 32-bit integer.
-#define MININT		((int)0x80000000)	
-#define MINLONG		((long)0x80000000)
+#ifndef MAXSHORT
+#define MAXSHORT SHRT_MAX
+#endif
+
+#ifndef MAXINT
+#define MAXINT   INT_MAX
+#endif
+
+#ifndef MAXLONG
+#define MAXLONG  LONG_MAX
+#endif
+
+#ifndef MINCHAR
+#define MINCHAR  CHAR_MIN
+#endif
+
+#ifndef MINSHORT
+#define MINSHORT SHRT_MIN
+#endif
+
+#ifndef MININT
+#define MININT   INT_MIN
+#endif
+
+#ifndef MINLONG
+#define MINLONG  LONG_MIN
 #endif
 
 

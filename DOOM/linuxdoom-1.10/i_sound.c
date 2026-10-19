@@ -642,7 +642,10 @@ I_SubmitSound(void)
   outn += n;
 }
 
-
+void I_ClearSoundBuffer(void)
+{
+  outn = 0;
+}
 
 void
 I_UpdateSoundParams

@@ -839,7 +839,7 @@ Sun Jan 19 14:27:06 1997    <bk@gamers.org ()>
 
         * doomdef.h: 
           Got rid of multiply defined warnings for Linux, 
-          included values.h.
+          included limits.h.
 
         * FILES2:
           created a commented list of all files, removed a few

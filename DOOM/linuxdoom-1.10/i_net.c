@@ -27,13 +27,20 @@ rcsid[] = "$Id: m_bbox.c,v 1.1 1997/02/03 22:45:10 b1 Exp $";
 #include <string.h>
 #include <stdio.h>
 
+#include <errno.h>
+
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <errno.h>
-#include <unistd.h>
-#include <netdb.h>
 #include <sys/ioctl.h>
+#include <netdb.h>
+#include <unistd.h>
+#endif
 
 #include "i_system.h"
 #include "d_event.h"
@@ -47,9 +54,9 @@ rcsid[] = "$Id: m_bbox.c,v 1.1 1997/02/03 22:45:10 b1 Exp $";
 #endif
 #include "i_net.h"
 
-
-
-
+#ifndef IPPORT_USERRESERVED
+#define IPPORT_USERRESERVED 5000
+#endif
 
 // For some odd reason...
 #define ntohl(x) \
@@ -93,8 +100,13 @@ int UDPsocket (void)
 	
     // allocate a socket
     s = socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (s<0)
-	I_Error ("can't create socket: %s",strerror(errno));
+    #ifdef _WIN32
+        if (s == INVALID_SOCKET)
+            I_Error("can't create socket: %d", WSAGetLastError());
+    #else
+        if (s < 0)
+            I_Error("can't create socket: %s", strerror(errno));
+    #endif
 		
     return s;
 }
@@ -243,7 +255,12 @@ int GetLocalAddress (void)
 //
 void I_InitNetwork (void)
 {
-    boolean		trueval = true;
+    #ifdef _WIN32
+        u_long nonblocking = 1;
+    #else
+        int nonblocking = 1;
+    #endif
+
     int			i;
     int			p;
     struct hostent*	hostentry;	// host information entry
@@ -290,6 +307,14 @@ void I_InitNetwork (void)
 	return;
     }
 
+    #ifdef _WIN32
+        WSADATA wsaData;
+        int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
+
+        if (result != 0)
+            I_Error("WSAStartup failed: %d", result);
+    #endif
+
     netsend = PacketSend;
     netget = PacketGet;
     netgame = true;
@@ -326,7 +351,14 @@ void I_InitNetwork (void)
     // build message to receive
     insocket = UDPsocket ();
     BindToLocalPort (insocket,htons(DOOMPORT));
-    ioctl (insocket, FIONBIO, &trueval);
+
+    #ifdef _WIN32
+        if (ioctlsocket(insocket, FIONBIO, &nonblocking) == SOCKET_ERROR)
+            I_Error("ioctlsocket failed: %d", WSAGetLastError());
+    #else
+        if (ioctl(insocket, FIONBIO, &nonblocking) == -1)
+            I_Error("ioctl failed: %s", strerror(errno));
+    #endif
 
     sendsocket = UDPsocket ();
 }
