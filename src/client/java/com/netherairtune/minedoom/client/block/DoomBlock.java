@@ -21,8 +21,11 @@ public class DoomBlock extends Block {
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player,
             BlockHitResult hitResult) {
         if (level.isClientSide()) {
-            Minecraft.getInstance().setScreenAndShow(new DoomUIScreen());
-            return InteractionResult.SUCCESS;
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.gui.screen() == null) {
+                mc.setScreenAndShow(new DoomUIScreen());
+            }
+            return InteractionResult.CONSUME;
         }
 
         return InteractionResult.FAIL;

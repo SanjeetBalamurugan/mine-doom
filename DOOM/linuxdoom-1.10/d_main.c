@@ -1139,85 +1139,72 @@ void D_DoomMain (void)
     printf ("ST_Init: Init status bar.\n");
     ST_Init ();
 
-    // check for a driver that wants intermission stats
     p = M_CheckParm ("-statcopy");
-    if (p && p<myargc-1)
+    if (p && p < myargc - 1)
     {
-	// for statistics driver
-	extern  void*	statcopy;
-
-	statcopy = (void*)atoi(myargv[p+1]);
-	printf ("External statistics registered.\n");
+        extern void* statcopy;
+        statcopy = (void*)(intptr_t)atoi(myargv[p+1]);
+        printf ("External statistics registered.\n");
     }
 
-    // start the apropriate game based on parms
     p = M_CheckParm ("-record");
-
-    if (p && p < myargc-1)
+    if (p && p < myargc - 1)
     {
-	G_RecordDemo (myargv[p+1]);
-	autostart = true;
+        G_RecordDemo (myargv[p+1]);
+        autostart = true;
     }
 
     p = M_CheckParm ("-playdemo");
-    if (p && p < myargc-1)
+    if (p && p < myargc - 1)
     {
-	singledemo = true;              // quit after one demo
-	G_DeferedPlayDemo (myargv[p+1]);
-	D_DoomLoop ();  // never returns
+        singledemo = true;
+        G_DeferedPlayDemo (myargv[p+1]);
     }
 
     p = M_CheckParm ("-timedemo");
-    if (p && p < myargc-1)
+    if (p && p < myargc - 1)
     {
-	G_TimeDemo (myargv[p+1]);
-	D_DoomLoop ();  // never returns
+        G_TimeDemo (myargv[p+1]);
     }
 
     p = M_CheckParm ("-loadgame");
-    if (p && p < myargc-1)
+    if (p && p < myargc - 1)
     {
-	if (M_CheckParm("-cdrom"))
-	    sprintf(file, "c:\\doomdata\\"SAVEGAMENAME"%c.dsg",myargv[p+1][0]);
-	else
-	    sprintf(file, SAVEGAMENAME"%c.dsg",myargv[p+1][0]);
-	G_LoadGame (file);
+        if (M_CheckParm("-cdrom"))
+            sprintf(file, "c:\\doomdata\\"SAVEGAMENAME"%c.dsg", myargv[p+1][0]);
+        else
+            sprintf(file, SAVEGAMENAME"%c.dsg", myargv[p+1][0]);
+        G_LoadGame (file);
     }
 
-
-    if ( gameaction != ga_loadgame )
+    if (gameaction != ga_loadgame)
     {
-	if (autostart || netgame)
-	    G_InitNew (startskill, startepisode, startmap);
-	else
-	    D_StartTitle ();                // start up intro loop
-
+        if (autostart || netgame)
+        {
+            printf ("G_InitNew: Starting new game (skill %d, ep %d, map %d).\n", startskill, startepisode, startmap);
+            G_InitNew (startskill, startepisode, startmap);
+        }
+        else
+        {
+            printf ("D_StartTitle: Starting title loop.\n");
+            D_StartTitle ();
+        }
     }
 
-    // D_DoomLoop ();  // never returns
-
-	// Call run tick externally
-	if (demorecording)
-	G_BeginRecording ();
+    if (demorecording)
+        G_BeginRecording ();
 
     if (M_CheckParm ("-debugfile"))
     {
-	char    filename[20];
-	sprintf (filename,"debug%i.txt",consoleplayer);
-	printf ("debug output to: %s\n",filename);
-	debugfile = fopen (filename,"w");
+        char filename[20];
+        sprintf (filename, "debug%i.txt", consoleplayer);
+        printf ("debug output to: %s\n", filename);
+        debugfile = fopen (filename, "w");
     }
 
+    printf ("I_InitGraphics: Setting up graphics.\n");
     I_InitGraphics ();
 
-	S_UpdateSounds (players[consoleplayer].mo);// move positional sounds
-	#ifndef SNDSERV
-		// Sound mixing for the buffer is snychronous.
-		I_UpdateSound();
-	#endif
-		// Synchronous sound output is explicitly called.
-	#ifndef SNDINTR
-		// Update sound output.
-		I_SubmitSound();
-	#endif
+    printf ("D_DoomMain: Initialization complete.\n");
+
 }
