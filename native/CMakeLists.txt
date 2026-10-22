@@ -56,6 +56,8 @@ endif()
 
 target_compile_options(doomjni PRIVATE -w -fno-strict-aliasing)
 
+
+
 foreach(flag
         -Wno-error=implicit-function-declaration
         -Wno-error=implicit-int
