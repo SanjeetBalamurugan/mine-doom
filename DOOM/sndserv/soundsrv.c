@@ -1,4 +1,4 @@
-// Emacs style mode select   -*- C++ -*- 
+// Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id: soundsrv.c,v 1.3 1997/01/29 22:40:44 b1 Exp $
@@ -64,10 +64,10 @@ static const char rcsid[] = "$Id: soundsrv.c,v 1.3 1997/01/29 22:40:44 b1 Exp $"
 typedef struct wadinfo_struct
 {
     // should be IWAD
-    char	identification[4];	
+    char	identification[4];
     int		numlumps;
     int		infotableofs;
-    
+
 } wadinfo_t;
 
 
@@ -76,7 +76,7 @@ typedef struct filelump_struct
     int		filepos;
     int		size;
     char	name[8];
-    
+
 } filelump_t;
 
 
@@ -96,10 +96,10 @@ int 		lengths[NUMSFX];
 signed short	mixbuffer[MIXBUFFERSIZE];
 
 // file descriptor of sfx device
-int		sfxdevice;			
+int		sfxdevice;
 
 // file descriptor of music device
-int 		musdevice;			
+int 		musdevice;
 
 // the channel data pointers
 unsigned char*	channels[8];
@@ -126,7 +126,7 @@ int*		channelleftvol_lookup[8];
 int*		channelrightvol_lookup[8];
 
 // sfx id of the playing sound effect
-int		channelids[8];			
+int		channelids[8];
 
 int		snd_verbose=1;
 
@@ -146,11 +146,11 @@ int mix(void)
     register int		dl;
     register int		dr;
     register unsigned int	sample;
-    
+
     signed short*		leftout;
     signed short*		rightout;
     signed short*		leftend;
-    
+
     int				step;
 
     leftout = mixbuffer;
@@ -204,7 +204,7 @@ int mix(void)
 	    if (channels[2] >= channelsend[2])
 		channels[2] = 0;
 	}
-	
+
 	if (channels[3])
 	{
 	    sample = *channels[3];
@@ -217,7 +217,7 @@ int mix(void)
 	    if (channels[3] >= channelsend[3])
 		channels[3] = 0;
 	}
-	
+
 	if (channels[4])
 	{
 	    sample = *channels[4];
@@ -230,7 +230,7 @@ int mix(void)
 	    if (channels[4] >= channelsend[4])
 		channels[4] = 0;
 	}
-	
+
 	if (channels[5])
 	{
 	    sample = *channels[5];
@@ -243,7 +243,7 @@ int mix(void)
 	    if (channels[5] >= channelsend[5])
 		channels[5] = 0;
 	}
-	
+
 	if (channels[6])
 	{
 	    sample = *channels[6];
@@ -277,7 +277,7 @@ int mix(void)
 	// if (dr > 127) *rightout = 127;
 	// else if (dr < -128) *rightout = -128;
 	// else *rightout = dr;
-	
+
 	if (dl > 0x7fff)
 	    *leftout = 0x7fff;
 	else if (dl < -0x8000)
@@ -314,7 +314,7 @@ grabdata
     char*	doom2wad;
     char*	doom2fwad;
     // Now where are TNT and Plutonia. Yuck.
-    
+
     //	char *home;
     char*	doomwaddir;
 
@@ -331,10 +331,10 @@ grabdata
 
     doom2fwad = malloc(strlen(doomwaddir)+1+10+1);
     sprintf(doom2fwad, "%s/doom2f.wad", doomwaddir);
-    
+
     doomuwad = malloc(strlen(doomwaddir)+1+8+1);
     sprintf(doomuwad, "%s/doomu.wad", doomwaddir);
-    
+
     doomwad = malloc(strlen(doomwaddir)+1+8+1);
     sprintf(doomwad, "%s/doom.wad", doomwaddir);
 
@@ -375,7 +375,7 @@ grabdata
 	exit(-1);
     }
 
-    
+
     openwad(name);
     if (snd_verbose)
 	fprintf(stderr, "loading from [%s]\n", name);
@@ -424,10 +424,10 @@ addsfx
   int		seperation )
 {
     static unsigned short	handlenums = 0;
- 
+
     int		i;
     int		rc = -1;
-    
+
     int		oldest = mytime;
     int		oldestnum = 0;
     int		slot;
@@ -472,7 +472,7 @@ addsfx
 
     if (!handlenums)
 	handlenums = 100;
-    
+
     channelhandles[slot] = rc = handlenums++;
     channelstep[slot] = step;
     channelstepremainder[slot] = 0;
@@ -489,15 +489,15 @@ addsfx
 
     // (x^2 seperation)
     rightvol =
-	volume - (volume*seperation*seperation)/(256*256);	
+	volume - (volume*seperation*seperation)/(256*256);
 
     // sanity check
     if (rightvol < 0 || rightvol > 127)
 	derror("rightvol out of bounds");
-    
+
     if (leftvol < 0 || leftvol > 127)
 	derror("leftvol out of bounds");
-    
+
     // get the proper lookup table piece
     //  for this volume level
     channelleftvol_lookup[slot] = &vol_lookup[leftvol*256];
@@ -540,7 +540,7 @@ void initdata(void)
 
     int		i;
     int		j;
-    
+
     int*	steptablemid = steptable + 128;
 
     for (i=0 ;
@@ -549,7 +549,7 @@ void initdata(void)
     {
 	channels[i] = 0;
     }
-    
+
     gettimeofday(&last, &whocares);
 
     for (i=-128 ; i<128 ; i++)
@@ -561,7 +561,7 @@ void initdata(void)
     // for (i=0 ; i<128 ; i++)
     // for (j=0 ; j<256 ; j++)
     // vol_lookup[i*256+j] = (i*(j-128))/127;
-    
+
     for (i=0 ; i<128 ; i++)
 	for (j=0 ; j<256 ; j++)
 	    vol_lookup[i*256+j] = (i*(j-128)*256)/127;
@@ -596,15 +596,15 @@ main
     int		nrc;
     int		sndnum;
     int		handle = 0;
-    
+
     unsigned char	commandbuf[10];
     struct timeval	zerowait = { 0, 0 };
 
-    
+
     int 	step;
     int 	vol;
     int		sep;
-    
+
     int		i;
     int		waitingtofinish=0;
 
@@ -612,7 +612,7 @@ main
     grabdata(c, v);
 
     // init any data
-    initdata();		
+    initdata();
 
     I_InitSound(11025, 16);
 
@@ -620,7 +620,7 @@ main
 
     if (snd_verbose)
 	fprintf(stderr, "ready\n");
-    
+
     // parse commands and play sounds until done
     FD_ZERO(&fdset);
     FD_SET(0, &fdset);
@@ -691,12 +691,12 @@ main
 			    // returns the handle
 			    //	outputushort(handle);
 			    break;
-			    
+
 			  case 'q':
 			    read(0, commandbuf, 1);
 			    waitingtofinish = 1; rc = 0;
 			    break;
-			    
+
 			  case 's':
 			  {
 			      int fd;
@@ -710,7 +710,7 @@ main
 			      close(fd);
 			  }
 			  break;
-			  
+
 			  default:
 			    fprintf(stderr, "Did not recognize command\n");
 			    break;
@@ -729,7 +729,7 @@ main
 	if (waitingtofinish)
 	{
 	    for(i=0 ; i<8 && !channels[i] ; i++);
-	    
+
 	    if (i==8)
 		done=1;
 	}

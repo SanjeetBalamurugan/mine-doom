@@ -1,27 +1,53 @@
 #include <jni.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
 
 #include "doomdef.h"
 #include "doom_lib.h"
 #include "doom_sounds.h"
 #include "com_doom_DoomJNI.h"
 
+#ifdef _WIN32
+#include <direct.h>
+#define CHDIR _chdir
+#else
+#include <unistd.h>
+#define CHDIR chdir
+#endif
+
 JNIEXPORT void JNICALL Java_com_doom_DoomJNI_init(JNIEnv* env, jclass cls, jobjectArray args)
 {
+    if (!args) return;
     jsize n = args ? (*env)->GetArrayLength(env, args) : 0;
     char** argv = (char**)calloc((size_t)n + 2, sizeof(char*));
+    if (!argv) return;
+
     jsize i;
+    #ifdef _WIN32
+    _set_fmode(_O_BINARY);
+    #endif
 
     argv[0] = strdup("doom");
     for (i = 0; i < n; i++)
     {
         jstring s = (jstring)(*env)->GetObjectArrayElement(env, args, i);
-        const char* c = s ? (*env)->GetStringUTFChars(env, s, NULL) : NULL;
-        argv[i + 1] = strdup(c ? c : "");
-        if (c) (*env)->ReleaseStringUTFChars(env, s, c);
-        if (s) (*env)->DeleteLocalRef(env, s);
+        if (s) {
+            const char* c = (*env)->GetStringUTFChars(env, s, NULL);
+            argv[i + 1] = strdup(c ? c : "");
+            (*env)->ReleaseStringUTFChars(env, s, c);
+            (*env)->DeleteLocalRef(env, s);
+        } else {
+            argv[i + 1] = strdup("");
+        }
     }
+    argv[n + 1] = NULL;
+
+    printf("[Native JNI] Passing %d total arguments to engine:\n", n + 1);
+    for (int j = 0; j < (n + 1); j++) {
+        printf("  argv[%d]: %s\n", j, argv[j]);
+    }
+    fflush(stdout);
     DOOM_INIT((int)n + 1, argv);
 }
 

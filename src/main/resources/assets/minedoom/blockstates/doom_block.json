@@ -1,0 +1,5 @@
+{
+  "variants": {
+    "": { "model": "minedoom:block/doom_block" }
+  }
+}

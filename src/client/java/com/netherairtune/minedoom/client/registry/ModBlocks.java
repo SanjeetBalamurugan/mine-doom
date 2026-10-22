@@ -1,0 +1,35 @@
+package com.netherairtune.minedoom.client.registry;
+
+import com.netherairtune.minedoom.MineDoom;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import java.util.function.Function;
+
+public class ModBlocks {
+
+    public static Block DOOM_BLOCK;
+
+    public static void init(Function<BlockBehaviour.Properties, Block> blockFactory) {
+        DOOM_BLOCK = register("doom_block", blockFactory, BlockBehaviour.Properties.of().strength(4.0f));
+    }
+
+    private static Block register(String name, Function<BlockBehaviour.Properties, Block> blockFactory, BlockBehaviour.Properties properties) {
+        ResourceKey<Block> blockKey = ResourceKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath(MineDoom.MOD_ID, name));
+        ResourceKey<Item> itemKey = ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(MineDoom.MOD_ID, name));
+
+        Block block = blockFactory.apply(properties.setId(blockKey));
+        Registry.register(BuiltInRegistries.BLOCK, blockKey, block);
+
+        BlockItem blockItem = new BlockItem(block, new Item.Properties().setId(itemKey));
+        Registry.register(BuiltInRegistries.ITEM, itemKey, blockItem);
+
+        return block;
+    }
+}

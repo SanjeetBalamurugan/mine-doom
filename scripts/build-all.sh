@@ -21,15 +21,15 @@ export ZIG ANDROID_NDK_HOME JAVA_HOME
 chmod +x "$ROOT"/cmake/toolchains/zig/*.sh "$ROOT"/scripts/*.sh
 
 DOOMJNI_SRC="$ROOT/src/main/java/com/doom/DoomJNI.java"
-if [ -f "$DOOMJNI_SRC" ]; then
-  mkdir -p "$BUILD_ROOT/javac"
-  CP="${JAVAC_CP:-}"
-  if [ -z "$CP" ] && [ -d "$HOME/.gradle" ]; then
-    CP="$(find "$HOME/.gradle" -name 'slf4j-api-*.jar' ! -name '*sources*' 2>/dev/null | head -1 || true)"
-  fi
-  javac -h "$ROOT/native/include" -d "$BUILD_ROOT/javac" -sourcepath "$ROOT/src/main/java" ${CP:+-cp "$CP"} "$DOOMJNI_SRC" \
-    || echo "javac -h failed, using existing header (set JAVAC_CP to an slf4j-api jar)" >&2
-fi
+# if [ -f "$DOOMJNI_SRC" ]; then
+#   mkdir -p "$BUILD_ROOT/javac"
+#   CP="${JAVAC_CP:-}"
+#   if [ -z "$CP" ] && [ -d "$HOME/.gradle" ]; then
+#     CP="$(find "$HOME/.gradle" -name 'slf4j-api-*.jar' ! -name '*sources*' 2>/dev/null | head -1 || true)"
+#   fi
+#   javac -h "$ROOT/native/include" -d "$BUILD_ROOT/javac" -sourcepath "$ROOT/src/main/java" ${CP:+-cp "$CP"} "$DOOMJNI_SRC" \
+#     || echo "javac -h failed, using existing header (set JAVAC_CP to an slf4j-api jar)" >&2
+# fi
 
 for fn in $(grep -o 'Java_com_doom_DoomJNI_[A-Za-z0-9_]*' "$ROOT/native/include/com_doom_DoomJNI.h" | sort -u); do
   grep -q "$fn" "$ROOT/native/src/doom_jni.c" || { echo "not implemented in native/src/doom_jni.c: $fn" >&2; exit 1; }

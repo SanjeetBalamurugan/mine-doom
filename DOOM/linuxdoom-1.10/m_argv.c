@@ -1,4 +1,4 @@
-// Emacs style mode select   -*- C++ -*- 
+// Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id:$
@@ -25,6 +25,7 @@ rcsid[] = "$Id: m_argv.c,v 1.1 1997/02/03 22:45:10 b1 Exp $";
 
 
 #include <string.h>
+#include <stdio.h>
 
 int		myargc;
 char**		myargv;
@@ -51,6 +52,18 @@ int M_CheckParm (char *check)
     return 0;
 }
 
+char* M_GetParm(int idx)
+{
+    if (idx > myargc)
+    {
+        perror("index is greater than arg count");
+    }
 
+    return myargv[idx];
+}
 
+int M_GetArgc()
+{
+    return myargc;
+}
 
