@@ -1,0 +1,20 @@
+{
+  "block.minedoom.doom_block": "Doom Block",
+  "itemGroup.minedoom": "MineDoom",
+  "minedoom.screen.title": "MineDoom",
+  "minedoom.screen.close": "Close",
+  "minedoom.screen.loading": "Loading DOOM...",
+  "minedoom.screen.no_wad.title": "Doom needs a WAD file",
+  "minedoom.screen.no_wad.body": "Put doom1.wad, doom.wad or doom2.wad in the minedoom folder, then reopen this screen.",
+  "minedoom.screen.no_wad.open_folder": "Open Folder",
+  "minedoom.screen.quit.title": "Doom has quit",
+  "minedoom.screen.quit.body": "Doom closed itself. Restart Minecraft to play again.",
+  "minedoom.screen.error.title": "Doom hit an error",
+  "minedoom.screen.error.body": "%s",
+  "minedoom.screen.native_missing": "The Doom native library could not be loaded on this platform.",
+  "minedoom.log.error": "[MineDoom] %s: %s",
+  "minedoom.tooltip.cabinet": "Right-click to play",
+  "minedoom.key.category": "MineDoom",
+  "minedoom.key.release_mouse": "Release Mouse",
+  "item.minedoom.doom_block": "Doom Block"
+}

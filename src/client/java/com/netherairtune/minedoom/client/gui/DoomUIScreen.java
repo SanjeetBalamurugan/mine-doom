@@ -3,6 +3,7 @@ package com.netherairtune.minedoom.client.gui;
 import com.doom.DoomJNI;
 import com.doom.WadHelper;
 import com.mojang.blaze3d.platform.NativeImage;
+import com.netherairtune.minedoom.client.DoomLog;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -18,6 +19,7 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
 import javax.sound.sampled.SourceDataLine;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class DoomUIScreen extends Screen {
@@ -56,7 +58,7 @@ public class DoomUIScreen extends Screen {
     private final ConcurrentLinkedQueue<Runnable> inputQueue = new ConcurrentLinkedQueue<>();
 
     public DoomUIScreen() {
-        super(Component.literal("DOOM UI"));
+        super(Component.translatable("minedoom.screen.title"));
     }
 
     @Override
@@ -68,7 +70,7 @@ public class DoomUIScreen extends Screen {
                 Path mcDir = this.minecraft.gameDirectory.toPath();
                 Path wadName = WadHelper.getWadFile(mcDir);
                 if (wadName == null) {
-                    System.err.println("[MineDoom] WAD file could not be resolved.");
+                    DoomLog.error("minedoom.screen.no_wad.body");
                     return;
                 }
 
@@ -80,8 +82,10 @@ public class DoomUIScreen extends Screen {
                 });
                 engineInitialized = true;
             }
+        } catch (UnsatisfiedLinkError e) {
+            DoomLog.error("minedoom.screen.native_missing");
         } catch (Exception e) {
-            e.printStackTrace();
+            DoomLog.error(e);
         }
 
         if (engineInitialized) {
@@ -150,58 +154,63 @@ public class DoomUIScreen extends Screen {
             this.audioLine.open(format);
             this.audioLine.start();
         } catch (Exception e) {
-            e.printStackTrace();
+            DoomLog.error(e);
         }
 
         this.doomEngineThread = new Thread(() -> {
-            while (this.isRunning) {
-                Runnable task;
-                while ((task = inputQueue.poll()) != null) task.run();
-                synchronized (renderLock) {
-                    DoomJNI.runTick();
-                    DoomJNI.renderFrame();
+            try {
+                while (this.isRunning) {
+                    Runnable task;
+                    while ((task = inputQueue.poll()) != null) task.run();
+                    synchronized (renderLock) {
+                        DoomJNI.runTick();
+                        DoomJNI.renderFrame();
 
-                    byte[] pixels = DoomJNI.getScreenBuffer();
-                    byte[] palette = DoomJNI.getPalette();
+                        byte[] pixels = DoomJNI.getScreenBuffer();
+                        byte[] palette = DoomJNI.getPalette();
 
-                    if (pixels != null && palette != null && this.currentDoomFrame != null) {
-                        for (int y = 0; y < doomHeight; y++) {
-                            for (int x = 0; x < doomWidth; x++) {
-                                if (isOutsideRoundedTop(x, y)) {
-                                    this.currentDoomFrame.setPixelABGR(x, y, 0);
-                                    continue;
+                        if (pixels != null && palette != null && this.currentDoomFrame != null) {
+                            for (int y = 0; y < doomHeight; y++) {
+                                for (int x = 0; x < doomWidth; x++) {
+                                    if (isOutsideRoundedTop(x, y)) {
+                                        this.currentDoomFrame.setPixelABGR(x, y, 0);
+                                        continue;
+                                    }
+                                    int index = pixels[y * doomWidth + x] & 0xFF;
+                                    int palIdx = index * 3;
+                                    int r = palette[palIdx] & 0xFF;
+                                    int g = palette[palIdx + 1] & 0xFF;
+                                    int b = palette[palIdx + 2] & 0xFF;
+                                    int abgr = (255 << 24) | (b << 16) | (g << 8) | r;
+                                    this.currentDoomFrame.setPixelABGR(x, y, abgr);
                                 }
-                                int index = pixels[y * doomWidth + x] & 0xFF;
-                                int palIdx = index * 3;
-                                int r = palette[palIdx] & 0xFF;
-                                int g = palette[palIdx + 1] & 0xFF;
-                                int b = palette[palIdx + 2] & 0xFF;
-                                int abgr = (255 << 24) | (b << 16) | (g << 8) | r;
-                                this.currentDoomFrame.setPixelABGR(x, y, abgr);
                             }
+
+                            frameCount++;
+                            frameReady = true;
                         }
 
-                        frameCount++;
-                        frameReady = true;
+                        if (DoomJNI.hasQuit()) {
+                            quitRequested = true;
+                            this.isRunning = false;
+                            Minecraft.getInstance().execute(this::onClose);
+                        }
                     }
 
-                    if (DoomJNI.hasQuit()) {
-                        quitRequested = true;
-                        this.isRunning = false;
-                        Minecraft.getInstance().execute(this::onClose);
+                    short[] audioBuffer = DoomJNI.drainSound();
+                    if (audioBuffer != null && audioBuffer.length > 0 && this.audioLine != null) {
+                        byte[] byteBuffer = new byte[audioBuffer.length * 2];
+                        for (int i = 0; i < audioBuffer.length; i++) {
+                            byteBuffer[i * 2] = (byte) (audioBuffer[i] & 0xFF);
+                            byteBuffer[i * 2 + 1] = (byte) ((audioBuffer[i] >> 8) & 0xFF);
+                        }
+                        this.audioLine.write(byteBuffer, 0, byteBuffer.length);
                     }
+                    try { Thread.sleep(1000 / 35); } catch (InterruptedException ignored) {}
                 }
-
-                short[] audioBuffer = DoomJNI.drainSound();
-                if (audioBuffer != null && audioBuffer.length > 0 && this.audioLine != null) {
-                    byte[] byteBuffer = new byte[audioBuffer.length * 2];
-                    for (int i = 0; i < audioBuffer.length; i++) {
-                        byteBuffer[i * 2] = (byte) (audioBuffer[i] & 0xFF);
-                        byteBuffer[i * 2 + 1] = (byte) ((audioBuffer[i] >> 8) & 0xFF);
-                    }
-                    this.audioLine.write(byteBuffer, 0, byteBuffer.length);
-                }
-                try { Thread.sleep(1000 / 35); } catch (InterruptedException ignored) {}
+            } catch (Throwable t) {
+                this.isRunning = false;
+                DoomLog.error(t);
             }
         });
         this.doomEngineThread.setDaemon(true);
@@ -213,8 +222,9 @@ public class DoomUIScreen extends Screen {
         int footerY = windowY + windowHeight;
 
         if (!frameReady) {
+            Component loading = Component.translatable("minedoom.screen.loading");
             graphics.fill(windowX, windowY, windowX + windowWidth, footerY, 0xFF000000);
-            graphics.text(this.font, "Loading DOOM...", windowX + windowWidth / 2 - 40, windowY + windowHeight / 2, 0xFFFFFFFF, false);
+            graphics.text(this.font, loading, windowX + (windowWidth - this.font.width(loading)) / 2, windowY + windowHeight / 2, 0xFFFFFFFF, false);
         } else {
             synchronized (renderLock) {
                 if (this.dynamicTexture != null) {
@@ -233,10 +243,13 @@ public class DoomUIScreen extends Screen {
                 FOOTER_BG_COLOR);
 
         float ts = footerHeight / 15f;
+        Component footerTitle = Component
+                .literal(Component.translatable("minedoom.screen.title").getString().toUpperCase(Locale.ROOT))
+                .withStyle(ChatFormatting.BOLD);
         graphics.pose().pushMatrix();
         graphics.pose().translate(windowX + windowWidth * 0.04f, footerY + (footerHeight - 8 * ts) / 2f);
         graphics.pose().scale(ts, ts);
-        graphics.text(this.font, Component.literal("MINEDOOM").withStyle(ChatFormatting.BOLD), 0, 0, TITLE_COLOR, false);
+        graphics.text(this.font, footerTitle, 0, 0, TITLE_COLOR, false);
         graphics.pose().popMatrix();
 
         super.extractRenderState(graphics, mouseX, mouseY, partialTick);
