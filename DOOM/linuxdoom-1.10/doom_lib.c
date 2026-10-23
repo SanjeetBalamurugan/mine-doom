@@ -14,12 +14,14 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
+#include "i_system.h"
 
 extern int myargc;
 extern char** myargv;
 extern boolean nodrawers;
 extern boolean advancedemo;
 extern boolean singletics;
+boolean M_hasQuit;
 
 extern int maketic;
 extern ticcmd_t netcmds[MAXPLAYERS][BACKUPTICS];
@@ -41,6 +43,7 @@ void DOOM_INIT(int argc, char** argv)
     myargv = argv;
     nodrawers = false;
     singletics = true;
+    M_hasQuit = false;
 
     D_DoomMain();
 }
@@ -109,6 +112,17 @@ int DOOM_GetGameTic(void)
 int DOOM_GetLevelTime(void)
 {
     return leveltime;
+}
+
+boolean DOOM_HasQuit()
+{
+    return M_hasQuit;
+}
+
+void DOOM_SHUTDOWN()
+{
+    printf("DOOM_SHUTDOWN: Shutting down DOOM\n");
+    I_Quit();
 }
 
 void DOOM_KeyDown(int key)

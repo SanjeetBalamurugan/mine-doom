@@ -1,4 +1,4 @@
-// Emacs style mode select   -*- C++ -*- 
+// Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id:$
@@ -17,7 +17,7 @@
 // DESCRIPTION:
 //	Simple basic typedefs, isolated here to make it easier
 //	 separating modules.
-//    
+//
 //-----------------------------------------------------------------------------
 
 
@@ -31,7 +31,11 @@
 #ifdef __cplusplus
 typedef bool boolean;
 #elif defined(_WIN32)
-typedef unsigned char boolean;
+#ifdef boolean
+#undef boolean
+#endif
+#define boolean int
+
 #ifndef true
 #define true 1
 #endif

@@ -22,6 +22,8 @@ JNIEXPORT void JNICALL Java_com_doom_DoomJNI_mouseMove(JNIEnv *, jclass, jint, j
 JNIEXPORT void JNICALL Java_com_doom_DoomJNI_mouseButton(JNIEnv *, jclass, jint, jboolean);
 JNIEXPORT void JNICALL Java_com_doom_DoomJNI_sendKeyPress(JNIEnv *, jclass, jint);
 JNIEXPORT jshortArray JNICALL Java_com_doom_DoomJNI_drainSound(JNIEnv *, jclass);
+JNIEXPORT jboolean JNICALL Java_com_doom_DoomJNI_hasQuit(JNIEnv *, jclass);
+JNIEXPORT void JNICALL Java_com_doom_DoomJNI_shutdown(JNIEnv *, jclass);
 
 #ifdef __cplusplus
 }

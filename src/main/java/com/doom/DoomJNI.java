@@ -77,6 +77,8 @@ public class DoomJNI {
     public static native void mouseButton(int button, boolean pressed);
     public static native void sendKeyPress(int key);
     public static native short[] drainSound();
+    public static native boolean hasQuit();
+    public static native void shutdown();
 
     public static final int KEY_RIGHTARROW = 0xae;
     public static final int KEY_LEFTARROW = 0xac;

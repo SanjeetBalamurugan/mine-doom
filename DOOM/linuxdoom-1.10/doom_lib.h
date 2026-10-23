@@ -9,6 +9,8 @@ void DOOM_RUNTICK(void);
 boolean DOOM_IsPlayerReady(void);
 int DOOM_GetGameTic(void);
 int DOOM_GetLevelTime(void);
+boolean DOOM_HasQuit();
+void DOOM_SHUTDOWN();
 
 int DOOM_GetScreenWidth(void);
 int DOOM_GetScreenHeight(void);

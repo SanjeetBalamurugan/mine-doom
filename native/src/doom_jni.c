@@ -323,3 +323,42 @@ JNIEXPORT jshortArray JNICALL Java_com_doom_DoomJNI_drainSound(JNIEnv* env, jcla
     I_ClearSoundBuffer();
     return a;
 }
+
+JNIEXPORT jboolean JNICALL Java_com_doom_DoomJNI_hasQuit(JNIEnv* env, jclass cls)
+{
+    if (!env || !doom_initialized || doom_should_exit) return JNI_FALSE;
+    jboolean q = 0;
+
+    exit_jmp_active = 1;
+    if (setjmp(exit_jmp) == 0)
+    {
+        q = (jboolean)DOOM_HasQuit();
+        exit_jmp_active = 0;
+    } else {
+        exit_jmp_active = 0;
+        doom_initialized = 0;
+        doom_should_exit = 1;
+        return JNI_FALSE;
+    }
+
+    doom_should_exit = q;
+    return q;
+
+}
+JNIEXPORT void JNICALL Java_com_doom_DoomJNI_shutdown(JNIEnv* env, jclass cls)
+{
+    if (!env || !doom_initialized || doom_should_exit) return;
+
+    exit_jmp_active = 1;
+    if (setjmp(exit_jmp) == 0)
+    {
+        doom_should_exit = 1;
+        DOOM_SHUTDOWN();
+        exit_jmp_active = 0;
+    } else {
+        exit_jmp_active = 0;
+        doom_initialized = 0;
+        doom_should_exit = 1;
+        return;
+    }
+}

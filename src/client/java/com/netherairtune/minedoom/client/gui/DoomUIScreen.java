@@ -4,6 +4,7 @@ import com.doom.DoomJNI;
 import com.doom.WadHelper;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -21,10 +22,12 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class DoomUIScreen extends Screen {
     private static boolean engineInitialized = false;
+    private static boolean quitRequested = false;
 
     private NativeImage currentDoomFrame;
     private DynamicTexture dynamicTexture;
     private Identifier frameLocation;
+    private int frameCount = 0;
     private int doomWidth = 320;
     private int doomHeight = 200;
 
@@ -44,7 +47,6 @@ public class DoomUIScreen extends Screen {
     private static final int TITLE_COLOR = 0xFFDD0033;
 
     private BedrockCloseButton closeButton;
-    private CrtToggleButton crtButton;
 
     private Thread doomEngineThread;
     private SourceDataLine audioLine;
@@ -107,7 +109,6 @@ public class DoomUIScreen extends Screen {
         }
 
         this.closeButton = this.addRenderableWidget(new BedrockCloseButton(0, 0, () -> this.onClose()));
-        this.crtButton = this.addRenderableWidget(new CrtToggleButton(0, 0, 75, 20));
         layoutButtons();
 
         startDoomEngine();
@@ -115,10 +116,6 @@ public class DoomUIScreen extends Screen {
 
     private void layoutButtons() {
         int footerY = windowY + windowHeight;
-        int crtH = Math.max(12, (int) (footerHeight * 0.4f));
-        int crtW = (int) (windowWidth * 0.2f);
-        crtButton.setSize(crtW, crtH);
-        crtButton.setPosition(windowX + (int) (windowWidth * 0.68f), footerY + (footerHeight - crtH) / 2);
         closeButton.setPosition(windowX + windowWidth - 24, footerY + (footerHeight - 20) / 2);
     }
 
@@ -183,7 +180,15 @@ public class DoomUIScreen extends Screen {
                                 this.currentDoomFrame.setPixelABGR(x, y, abgr);
                             }
                         }
+
+                        frameCount++;
                         frameReady = true;
+                    }
+
+                    if (DoomJNI.hasQuit()) {
+                        quitRequested = true;
+                        this.isRunning = false;
+                        Minecraft.getInstance().execute(this::onClose);
                     }
                 }
 
@@ -350,7 +355,9 @@ public class DoomUIScreen extends Screen {
             this.audioLine.stop();
             this.audioLine.close();
         }
-        try { if (this.doomEngineThread != null) this.doomEngineThread.join(500); } catch (InterruptedException ignored) {}
+        try { if (this.doomEngineThread != null) this.doomEngineThread.join(2000); } catch (InterruptedException ignored) {}
+        DoomJNI.shutdown();
+        engineInitialized = false;
         if (this.dynamicTexture != null) {
             this.dynamicTexture.close();
         }
