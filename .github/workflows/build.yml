@@ -1,30 +1,160 @@
-# Automatically build the project and run any configured tests for every push
-# and submitted pull request. This can help catch issues that only occur on
-# certain platforms or Java versions, and provides a first line of defence
-# against bad commits.
+name: MineDoom Build
 
-name: build
-on: [pull_request, push]
+on:
+  push:
+    branches: [ "main", "master" ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    name: Build Natives & Mod JARs (Ubuntu)
+    runs-on: ubuntu-latest
+
     steps:
-      - name: checkout repository
-        uses: actions/checkout@v6
-      - name: validate gradle wrapper
-        uses: gradle/actions/wrapper-validation@v6
-      - name: setup jdk
-        uses: actions/setup-java@v5
+      - name: Checkout Repository & Submodules
+        uses: actions/checkout@v4
         with:
-          java-version: '25'
-          distribution: 'microsoft'
-      - name: make gradle wrapper executable
-        run: chmod +x ./gradlew
-      - name: build
-        run: ./gradlew build
-      - name: capture build artifacts
-        uses: actions/upload-artifact@v7
+          submodules: recursive
+
+      # 1. Run scripts/linux.sh
+      - name: Run scripts/linux.sh
+        run: |
+          chmod +x scripts/linux.sh
+          ./scripts/linux.sh
+
+      # 2. Run scripts/install-toolchains.sh
+      - name: Run scripts/install-toolchains.sh
+        run: |
+          chmod +x scripts/install-toolchains.sh
+          ./scripts/install-toolchains.sh
+
+      # 3. Get jdk-25 from SDKMAN
+      - name: Install JDK 25 via SDKMAN
+        shell: bash
+        run: |
+          if [ ! -d "$HOME/.sdkman" ]; then
+            curl -s "https://get.sdkman.io?rcupdate=false" | bash
+          fi
+          source "$HOME/.sdkman/bin/sdkman-init.sh"
+          sed -i 's/sdkman_auto_answer=false/sdkman_auto_answer=true/g' "$HOME/.sdkman/etc/config"
+
+          # Resolve the latest JDK 25 identifier available in SDKMAN (Temurin/OpenJDK)
+          JDK25_ID=$(sdk list java | grep -oE '25(\.[0-9]+)*-(tem|open|zulu)' | head -n 1)
+          echo "Installing JDK 25 from SDKMAN: ${JDK25_ID:-25-open}"
+          sdk install java "${JDK25_ID:-25-open}"
+          sdk default java "${JDK25_ID:-25-open}"
+
+          JAVA_HOME_PATH="$HOME/.sdkman/candidates/java/current"
+          echo "JAVA_HOME=$JAVA_HOME_PATH" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_PATH/bin" >> "$GITHUB_PATH"
+
+          java -version
+          javac -version
+
+      # 4. Run scripts/build-all.sh
+      - name: Run scripts/build-all.sh
+        run: |
+          chmod +x scripts/build-all.sh
+          ./scripts/build-all.sh
+
+      # 5. Run gradlew build
+      - name: Run gradlew build
+        run: |
+          chmod +x gradlew
+          ./gradlew build --no-daemon
+
+      # Stage both JARs (main mod JAR + sources/secondary JAR) and compute checksums
+      - name: Stage Both JARs & Print Checksums
+        id: jars
+        run: |
+          mkdir -p dist/main dist/sources
+
+          MAIN_JAR=$(find build/libs -maxdepth 1 -type f -name "*.jar" ! -name "*-sources.jar" ! -name "*-dev.jar" | sort | head -n 1)
+          SECOND_JAR=$(find build/libs -maxdepth 1 -type f -name "*.jar" ! -path "$MAIN_JAR" | sort | head -n 1)
+
+          if [ -z "$MAIN_JAR" ] || [ -z "$SECOND_JAR" ]; then
+            echo "Error: Expected two JARs in build/libs, found:"
+            ls -la build/libs
+            exit 1
+          fi
+
+          MAIN_NAME=$(basename "$MAIN_JAR")
+          SECOND_NAME=$(basename "$SECOND_JAR")
+
+          cp "$MAIN_JAR" "dist/main/$MAIN_NAME"
+          cp "$SECOND_JAR" "dist/sources/$SECOND_NAME"
+          cp "$MAIN_JAR" "$SECOND_JAR" dist/
+
+          cd dist
+          sha256sum "$MAIN_NAME" "$SECOND_NAME" | tee SHA256SUMS.txt
+          sha512sum "$MAIN_NAME" "$SECOND_NAME" | tee SHA512SUMS.txt
+
+          echo "=========================================="
+          echo "            SHA-256 CHECKSUMS             "
+          echo "=========================================="
+          cat SHA256SUMS.txt
+          echo ""
+          echo "=========================================="
+          echo "            SHA-512 CHECKSUMS             "
+          echo "=========================================="
+          cat SHA512SUMS.txt
+
+          echo "main_name=$MAIN_NAME" >> "$GITHUB_OUTPUT"
+          echo "second_name=$SECOND_NAME" >> "$GITHUB_OUTPUT"
+
+      # 6. Upload both JARs to generate individual downloadable links
+      - name: Upload Main Mod JAR
+        id: upload_main
+        uses: actions/upload-artifact@v4
         with:
-          name: Artifacts
-          path: build/libs/
+          name: ${{ steps.jars.outputs.main_name }}
+          path: dist/main/${{ steps.jars.outputs.main_name }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload Second JAR (Sources / Dev)
+        id: upload_second
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.jars.outputs.second_name }}
+          path: dist/sources/${{ steps.jars.outputs.second_name }}
+          if-no-files-found: error
+          retention-days: 90
+
+      # 7. Print downloadable links & checksums to console and Job Summary
+      - name: Print Download Links & Checksums
+        if: success()
+        run: |
+          echo "=========================================="
+          echo "            DOWNLOADABLE LINKS            "
+          echo "=========================================="
+          echo "1. ${{ steps.jars.outputs.main_name }}:"
+          echo "   ${{ steps.upload_main.outputs.artifact-url }}"
+          echo ""
+          echo "2. ${{ steps.jars.outputs.second_name }}:"
+          echo "   ${{ steps.upload_second.outputs.artifact-url }}"
+          echo "=========================================="
+
+          {
+            echo "## MineDoom Build Artifacts & Checksums"
+            echo ""
+            echo "### Downloadable Links"
+            echo "- **[Download \`${{ steps.jars.outputs.main_name }}\`](${{ steps.upload_main.outputs.artifact-url }})**"
+            echo "- **[Download \`${{ steps.jars.outputs.second_name }}\`](${{ steps.upload_second.outputs.artifact-url }})**"
+            echo ""
+            echo "### SHA-256 Checksums"
+            echo "\`\`\`text"
+            cat dist/SHA256SUMS.txt
+            echo "\`\`\`"
+            echo ""
+            echo "### SHA-512 Checksums"
+            echo "\`\`\`text"
+            cat dist/SHA512SUMS.txt
+            echo "\`\`\`"
+          } >> "$GITHUB_STEP_SUMMARY"
