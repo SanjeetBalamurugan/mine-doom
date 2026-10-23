@@ -1,11 +1,9 @@
 package com.netherairtune.minedoom.client;
 
 import com.netherairtune.minedoom.client.block.DoomBlock;
-import com.netherairtune.minedoom.client.gui.DoomUIScreen;
 import com.netherairtune.minedoom.client.registry.ModBlocks;
 
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.network.chat.Component;
