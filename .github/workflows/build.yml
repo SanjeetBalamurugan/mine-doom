@@ -22,19 +22,29 @@ jobs:
         with:
           submodules: recursive
 
-      # 1. Run scripts/linux.sh
+      # 1. Base Linux dependencies
       - name: Run scripts/linux.sh
         run: |
           chmod +x scripts/linux.sh
           ./scripts/linux.sh
 
-      # 2. Run scripts/install-toolchains.sh
+      # 2. Cross-compilation toolchains
       - name: Run scripts/install-toolchains.sh
         run: |
           chmod +x scripts/install-toolchains.sh
           ./scripts/install-toolchains.sh
 
-      # 3. Get JDK 25 via official setup-java action
+      # 3. CMake 4.2. Runs after the scripts above so it takes precedence on PATH
+      #    over any apt-installed CMake.
+      - name: Set up CMake 4.2
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '4.2.x'
+
+      - name: Verify CMake Version
+        run: cmake --version
+
+      # 4. JDK 25
       - name: Set up JDK 25
         uses: actions/setup-java@v4
         with:
@@ -46,7 +56,7 @@ jobs:
           java -version
           javac -version
 
-      # 4. Run scripts/build-all.sh
+      # 5. Native libraries for all platforms
       - name: Run scripts/build-all.sh
         run: |
           export SDKMAN_DIR="$HOME/.sdkman"
@@ -54,7 +64,7 @@ jobs:
           chmod +x scripts/build-all.sh
           ./scripts/build-all.sh
 
-      # 5. Run gradlew build
+      # 6. Mod JARs
       - name: Run gradlew build
         run: |
           export SDKMAN_DIR="$HOME/.sdkman"
@@ -62,7 +72,7 @@ jobs:
           chmod +x gradlew
           ./gradlew build --no-daemon
 
-      # Stage both JARs (main mod JAR + sources/secondary JAR) and compute checksums
+      # 7. Stage both JARs and compute checksums
       - name: Stage Both JARs & Print Checksums
         id: jars
         run: |
@@ -88,20 +98,10 @@ jobs:
           sha256sum "$MAIN_NAME" "$SECOND_NAME" | tee SHA256SUMS.txt
           sha512sum "$MAIN_NAME" "$SECOND_NAME" | tee SHA512SUMS.txt
 
-          echo "=========================================="
-          echo "            SHA-256 CHECKSUMS             "
-          echo "=========================================="
-          cat SHA256SUMS.txt
-          echo ""
-          echo "=========================================="
-          echo "            SHA-512 CHECKSUMS             "
-          echo "=========================================="
-          cat SHA512SUMS.txt
-
           echo "main_name=$MAIN_NAME" >> "$GITHUB_OUTPUT"
           echo "second_name=$SECOND_NAME" >> "$GITHUB_OUTPUT"
 
-      # 6. Upload both JARs to generate individual downloadable links
+      # 8. Upload each JAR as its own downloadable artifact
       - name: Upload Main Mod JAR
         id: upload_main
         uses: actions/upload-artifact@v4
@@ -120,19 +120,18 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-      # 7. Print downloadable links & checksums to console and Job Summary
+      # 9. Download links and checksums in the log and the job summary
       - name: Print Download Links & Checksums
         if: success()
         run: |
-          echo "=========================================="
-          echo "            DOWNLOADABLE LINKS            "
-          echo "=========================================="
           echo "1. ${{ steps.jars.outputs.main_name }}:"
           echo "   ${{ steps.upload_main.outputs.artifact-url }}"
-          echo ""
           echo "2. ${{ steps.jars.outputs.second_name }}:"
           echo "   ${{ steps.upload_second.outputs.artifact-url }}"
-          echo "=========================================="
+          echo ""
+          cat dist/SHA256SUMS.txt
+          echo ""
+          cat dist/SHA512SUMS.txt
 
           {
             echo "## MineDoom Build Artifacts & Checksums"
