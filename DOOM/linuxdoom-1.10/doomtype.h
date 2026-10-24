@@ -49,6 +49,8 @@ typedef enum {false, true} boolean;
 typedef unsigned char byte;
 #endif
 
+typedef char boolean_size_check[sizeof(boolean) == sizeof(int) ? 1 : -1];
+
 
 // Predefined with some OS.
 #include <limits.h>

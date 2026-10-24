@@ -1,4 +1,4 @@
-// Emacs style mode select   -*- C++ -*- 
+// Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id:$
@@ -16,7 +16,7 @@
 //
 // DESCRIPTION:
 //
-//    
+//
 //-----------------------------------------------------------------------------
 
 
@@ -46,6 +46,7 @@ void M_ScreenShot (void);
 
 void M_LoadDefaults (void);
 
+void M_SaveGameName(char* out, int slot);
 void M_SaveDefaults (void);
 
 

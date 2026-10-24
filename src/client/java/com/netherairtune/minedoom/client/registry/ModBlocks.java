@@ -23,6 +23,19 @@ public class ModBlocks {
 
     public static void init(Function<BlockBehaviour.Properties, Block> blockFactory) {
         DOOM_BLOCK = register("doom_block", blockFactory, BlockBehaviour.Properties.of().strength(4.0f));
+
+        ResourceKey<CreativeModeTab> tabKey = ResourceKey.create(
+                Registries.CREATIVE_MODE_TAB,
+                Identifier.fromNamespaceAndPath(MineDoom.MOD_ID, "minedoom"));
+
+        MINEDOOM_TAB = Registry.register(
+                BuiltInRegistries.CREATIVE_MODE_TAB,
+                tabKey,
+                CreativeModeTab.builder(CreativeModeTab.Row.TOP, 0)
+                        .title(Component.translatable("itemGroup.minedoom"))
+                        .icon(() -> new ItemStack(DOOM_BLOCK))
+                        .displayItems((parameters, output) -> output.accept(DOOM_BLOCK))
+                        .build());
     }
 
     private static Block register(String name, Function<BlockBehaviour.Properties, Block> blockFactory, BlockBehaviour.Properties properties) {

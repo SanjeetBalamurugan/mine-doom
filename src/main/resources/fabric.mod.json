@@ -3,15 +3,15 @@
 	"id": "minedoom",
 	"version": "${version}",
 	"name": "Mine Doom",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "MineDoom runs id Software's original 1997 Linux Doom C release (linuxdoom-1.10) natively inside Minecraft's own process via JNI. No virtual machines, no external emulators, and no pre-recorded video—just the real 1997 C engine compiled as a shared library and stepped directly by Minecraft.",
 	"authors": [
-		"Me!"
+		"SanjeetBalamurugan"
 	],
 	"contact": {
 		"sources": "https://github.com/SanjeetBalamurugan/mine-doom/",
         "issues": "https://github.com/SanjeetBalamurugan/mine-doom/issues"
 	},
-	"license": "CC0-1.0",
+	"license": "GNU GENERAL PUBLIC LICENSE Version 2",
 	"icon": "assets/minedoom/icon.png",
 	"environment": "*",
 	"entrypoints": {

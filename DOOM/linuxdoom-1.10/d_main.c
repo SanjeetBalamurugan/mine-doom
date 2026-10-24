@@ -142,6 +142,28 @@ event_t         events[MAXEVENTS];
 int             eventhead;
 int 		eventtail;
 
+void D_ResetWadFiles(void)
+{
+    memset(wadfiles, 0, sizeof(wadfiles));
+}
+
+static boolean viewactivestate = false;
+static boolean menuactivestate = false;
+static boolean inhelpscreensstate = false;
+static boolean fullscreen = false;
+static gamestate_t oldgamestate = -1;
+static int borderdrawcount;
+
+void D_ResetDisplay(void)
+{
+    viewactivestate = false;
+    menuactivestate = false;
+    inhelpscreensstate = false;
+    fullscreen = false;
+    oldgamestate = -1;
+    borderdrawcount = 0;
+    wipegamestate = GS_DEMOSCREEN;
+}
 
 //
 // D_PostEvent
@@ -604,7 +626,7 @@ void IdentifyVersion (void)
     sprintf(doom2wad, "%s/doom2.wad", doomwaddir);
 
     // Retail.
-    doomuwad = malloc(strlen(doomwaddir)+1+8+1);
+    doomuwad = malloc(strlen(doomwaddir)+1+9+1);
     sprintf(doomuwad, "%s/doomu.wad", doomwaddir);
 
     // Registered.
@@ -819,11 +841,21 @@ void FindResponseFile (void)
 void D_DoomMain (void)
 {
     int             p;
-    char                    file[256];
+    char                    file[600];
 
     FindResponseFile ();
 
     IdentifyVersion ();
+    {
+        extern char savegamedir[512];
+        int sd = M_CheckParm ("-savedir");
+        savegamedir[0] = 0;
+        if (sd && sd < myargc - 1)
+        {
+            strncpy (savegamedir, myargv[sd+1], sizeof(savegamedir) - 1);
+            savegamedir[sizeof(savegamedir) - 1] = 0;
+        }
+    }
 
     setbuf (stdout, NULL);
     modifiedgame = false;
@@ -1170,10 +1202,7 @@ void D_DoomMain (void)
     p = M_CheckParm ("-loadgame");
     if (p && p < myargc - 1)
     {
-        if (M_CheckParm("-cdrom"))
-            sprintf(file, "c:\\doomdata\\"SAVEGAMENAME"%c.dsg", myargv[p+1][0]);
-        else
-            sprintf(file, SAVEGAMENAME"%c.dsg", myargv[p+1][0]);
+        M_SaveGameName (file, myargv[p+1][0] - '0');
         G_LoadGame (file);
     }
 

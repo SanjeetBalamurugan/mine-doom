@@ -44,6 +44,8 @@ void exit(int status)
         exit_jmp_active = 0;
         longjmp(exit_jmp, 1);
     }
+
+    abort();
 }
 
 JNIEXPORT void JNICALL Java_com_doom_DoomJNI_init(JNIEnv* env, jclass cls, jobjectArray args)
@@ -121,17 +123,16 @@ JNIEXPORT void JNICALL Java_com_doom_DoomJNI_runTick(JNIEnv* env, jclass cls)
 JNIEXPORT jboolean JNICALL Java_com_doom_DoomJNI_isPlayerReady(JNIEnv* env, jclass cls)
 {
     if (!doom_initialized || doom_should_exit) return JNI_FALSE;
-    jboolean ready = JNI_FALSE;
     exit_jmp_active = 1;
     if (setjmp(exit_jmp) == 0) {
-        ready = DOOM_IsPlayerReady() ? JNI_TRUE : JNI_FALSE;
+        jboolean ready = DOOM_IsPlayerReady() ? JNI_TRUE : JNI_FALSE;
         exit_jmp_active = 0;
-    } else {
-        exit_jmp_active = 0;
-        doom_initialized = 0;
-        doom_should_exit = 1;
+        return ready;
     }
-    return ready;
+    exit_jmp_active = 0;
+    doom_initialized = 0;
+    doom_should_exit = 1;
+    return JNI_FALSE;
 }
 
 JNIEXPORT jint JNICALL Java_com_doom_DoomJNI_getGameTic(JNIEnv* env, jclass cls)
@@ -326,39 +327,20 @@ JNIEXPORT jshortArray JNICALL Java_com_doom_DoomJNI_drainSound(JNIEnv* env, jcla
 
 JNIEXPORT jboolean JNICALL Java_com_doom_DoomJNI_hasQuit(JNIEnv* env, jclass cls)
 {
-    if (!env || !doom_initialized || doom_should_exit) return JNI_FALSE;
-    jboolean q = 0;
-
-    exit_jmp_active = 1;
-    if (setjmp(exit_jmp) == 0)
-    {
-        q = (jboolean)DOOM_HasQuit();
-        exit_jmp_active = 0;
-    } else {
-        exit_jmp_active = 0;
-        doom_initialized = 0;
-        doom_should_exit = 1;
-        return JNI_FALSE;
-    }
-
-    doom_should_exit = q;
-    return q;
-
+    if (doom_should_exit) return JNI_TRUE;
+    if (!doom_initialized) return JNI_FALSE;
+    return DOOM_HasQuit() ? JNI_TRUE : JNI_FALSE;
 }
+
 JNIEXPORT void JNICALL Java_com_doom_DoomJNI_shutdown(JNIEnv* env, jclass cls)
 {
-    if (!env || !doom_initialized || doom_should_exit) return;
-
+    int save = doom_initialized && !doom_should_exit;
+    doom_should_exit = 1;
     exit_jmp_active = 1;
-    if (setjmp(exit_jmp) == 0)
-    {
-        doom_should_exit = 1;
-        DOOM_SHUTDOWN();
-        exit_jmp_active = 0;
-    } else {
-        exit_jmp_active = 0;
-        doom_initialized = 0;
-        doom_should_exit = 1;
-        return;
+    if (setjmp(exit_jmp) == 0) {
+        DOOM_SHUTDOWN(save);
     }
+    exit_jmp_active = 0;
+    doom_initialized = 0;
+    free_saved_argv();
 }

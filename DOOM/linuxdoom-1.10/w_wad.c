@@ -83,6 +83,26 @@ void**			lumpcache;
 
 #define strcmpi	strcasecmp
 
+void W_Shutdown(void)
+{
+    int i, j, h;
+
+    for (i = 0; i < numlumps; i++)
+    {
+        h = lumpinfo[i].handle;
+        if (h < 0) continue;
+        close(h);
+        for (j = i; j < numlumps; j++)
+            if (lumpinfo[j].handle == h) lumpinfo[j].handle = -1;
+    }
+
+    free(lumpinfo);
+    free(lumpcache);
+    lumpinfo = NULL;
+    lumpcache = NULL;
+    numlumps = 0;
+}
+
 void doom_strupr (char* s)
 {
     while (*s) { *s = toupper(*s); s++; }

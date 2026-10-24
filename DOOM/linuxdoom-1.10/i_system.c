@@ -73,10 +73,18 @@ int  I_GetHeapSize (void)
     return mb_used*1024*1024;
 }
 
+static byte* zonebase = NULL;
 byte* I_ZoneBase (int*	size)
 {
     *size = mb_used*1024*1024;
-    return (byte *) malloc (*size);
+    zonebase = (byte *) malloc (*size);
+    return zonebase;
+}
+
+void I_FreeZone (void)
+{
+    free(zonebase);
+    zonebase = NULL;
 }
 
 
@@ -115,13 +123,7 @@ void I_Init (void)
 //
 void I_Quit (void)
 {
-    D_QuitNetGame ();
-    I_ShutdownSound();
-    I_ShutdownMusic();
-    M_SaveDefaults ();
-    I_ShutdownGraphics();
-    M_hasQuit = false;
-    exit(0);
+    M_hasQuit = true; // nga this is the worse bug i have written
 }
 
 void I_WaitVBL(int count)
@@ -159,6 +161,10 @@ byte*	I_AllocLow(int length)
 // I_Error
 //
 extern boolean demorecording;
+#include <setjmp.h>
+
+jmp_buf doom_error_jmp;
+int doom_error_armed = 0;
 
 void I_Error (char *error, ...)
 {
@@ -172,6 +178,9 @@ void I_Error (char *error, ...)
     va_end (argptr);
 
     fflush( stderr );
+
+    if (doom_error_armed)
+	longjmp(doom_error_jmp, 1);
 
     // Shutdown. Here might be other errors.
     if (demorecording)

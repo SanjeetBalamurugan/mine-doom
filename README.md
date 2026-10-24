@@ -36,13 +36,13 @@
 
 3. **Supply a WAD File (Required):** MineDoom does **not** bundle copyrighted game data.
 
-   * Launch Minecraft, place a **Doom Doom Block**, and right-click it.
+   * Launch Minecraft, place a **Doom Block**, and right-click it.
 
    * Click **Open WAD Folder** on the prompt screen (or navigate to `.minecraft/minedoom/`).
 
    * Place `doom1.wad` (the freely distributable Episode 1 Shareware WAD), `doom.wad`, or `doom2.wad` into the `minedoom/` folder.
 
-   * Click **Check Again** (or reopen the cabinet) to boot straight into Doom without restarting Minecraft.
+   * Click **Check Again** (or reopen the block) to boot straight into Doom without restarting Minecraft.
 
 ---
 

@@ -15,6 +15,21 @@
 #include "doomstat.h"
 #include "d_event.h"
 #include "i_system.h"
+#include <setjmp.h>
+#include "sounds.h"
+#include "s_sound.h"
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+
+extern jmp_buf doom_error_jmp;
+extern int doom_error_armed;
+static int doom_dead = 0;
+
+#define GUARD(ret) \
+    if (doom_dead) return ret; \
+    if (setjmp(doom_error_jmp)) { doom_error_armed = 0; doom_dead = 1; M_hasQuit = true; return ret; } \
+    doom_error_armed = 1
 
 extern int myargc;
 extern char** myargv;
@@ -28,6 +43,13 @@ extern ticcmd_t netcmds[MAXPLAYERS][BACKUPTICS];
 
 static int current_mouse_buttons = 0;
 
+void D_ResetWadFiles(void);
+void D_ResetDisplay(void);
+void I_ShutdownSound(void);
+void I_ShutdownMusic(void);
+void I_FreeZone(void);
+void M_SaveDefaults(void);
+
 void D_Display(void);
 void D_PostEvent(event_t* ev);
 void D_DoAdvanceDemo(void);
@@ -39,19 +61,23 @@ void TryRunTics(void);
 
 void DOOM_INIT(int argc, char** argv)
 {
+    D_ResetWadFiles();
+    doom_dead = 0;
     myargc = argc;
     myargv = argv;
     nodrawers = false;
     singletics = true;
     M_hasQuit = false;
 
+    GUARD();
     D_DoomMain();
+    doom_error_armed = 0;
 }
 
 void DOOM_RUNTICK(void)
 {
+    GUARD();
     I_StartFrame();
-
     if (singletics)
     {
         I_StartTic();
@@ -68,6 +94,7 @@ void DOOM_RUNTICK(void)
     {
         TryRunTics();
     }
+    doom_error_armed = 0;
 }
 
 boolean DOOM_IsPlayerReady(void)
@@ -119,10 +146,55 @@ boolean DOOM_HasQuit()
     return M_hasQuit;
 }
 
-void DOOM_SHUTDOWN()
+void DOOM_SHUTDOWN(int save)
 {
-    printf("DOOM_SHUTDOWN: Shutting down DOOM\n");
-    I_Quit();
+    printf("DOOM_SHUTDOWN: Shutting down DOOM and resetting all static states\n");
+
+    D_QuitNetGame();
+    I_ShutdownSound();
+    I_ShutdownMusic();
+
+    if (save)
+        M_SaveDefaults();
+
+    W_Shutdown();
+
+    if (screens[0]) {
+        free(screens[0]);
+    }
+    screens[0] = screens[1] = screens[2] = screens[3] = NULL;
+
+    I_FreeZone();
+
+    for (int i = 0; i < NUMSFX; i++) {
+        S_sfx[i].lumpnum = S_sfx[i].usefulness = -1;
+        S_sfx[i].data = NULL;
+    }
+
+    for (int i = 0; i < NUMMUSIC; i++) {
+        S_music[i].lumpnum = 0;
+        S_music[i].data = NULL;
+        S_music[i].handle = 0;
+    }
+    D_ResetWadFiles();
+    D_ResetDisplay();
+
+    current_mouse_buttons = 0;
+    gametic = 0;
+    maketic = 0;
+    advancedemo = false;
+    memset(netcmds, 0, sizeof(netcmds));
+    memset(players, 0, sizeof(players));
+    memset(playeringame, 0, sizeof(playeringame));
+
+    menuactive = false;
+    automapactive = false;
+    paused = false;
+    demoplayback = false;
+    netgame = false;
+
+    wipegamestate = GS_DEMOSCREEN;
+    gamestate = GS_DEMOSCREEN;
 }
 
 void DOOM_KeyDown(int key)

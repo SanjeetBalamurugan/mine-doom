@@ -54,7 +54,7 @@ if(DOOM_FCOMMON)
     target_compile_options(doomjni PRIVATE -fcommon)
 endif()
 
-target_compile_options(doomjni PRIVATE -w -fno-strict-aliasing)
+target_compile_options(doomjni PRIVATE -Wall -Wno-unused -fno-strict-aliasing)
 
 
 

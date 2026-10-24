@@ -97,8 +97,8 @@ public class DoomJNI {
     public static final int KEY_F8 = 194;
     public static final int KEY_F9 = 195;
     public static final int KEY_F10 = 196;
-    public static final int KEY_F11 = 197;
-    public static final int KEY_F12 = 198;
+    public static final int KEY_F11 = 0xd7;
+    public static final int KEY_F12 = 0xd8;
     public static final int KEY_BACKSPACE = 127;
     public static final int KEY_PAUSE = 0xff;
     public static final int KEY_EQUALS = 0x3d;

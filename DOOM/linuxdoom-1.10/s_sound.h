@@ -1,4 +1,4 @@
-// Emacs style mode select   -*- C++ -*- 
+// Emacs style mode select   -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id:$
@@ -28,7 +28,20 @@
 #pragma interface
 #endif
 
+#include "sounds.h"
 
+typedef struct
+{
+    // sound information (if null, channel avail.)
+    sfxinfo_t*	sfxinfo;
+
+    // origin of sound
+    void*	origin;
+
+    // handle of the sound being played
+    int		handle;
+
+} channel_t;
 
 //
 // Initializes sound stuff, including volume
